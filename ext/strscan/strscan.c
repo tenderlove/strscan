@@ -8,9 +8,7 @@
     BSD License.  For details, see the COPYING and LICENSE.txt files.
 */
 
-#include "ruby/ruby.h"
-#include "ruby/re.h"
-#include "ruby/encoding.h"
+#include "strscan.h"
 
 #ifdef RUBY_EXTCONF_H
 #  include RUBY_EXTCONF_H
@@ -1661,6 +1659,11 @@ Init_strscan(void)
     id_byteslice = rb_intern("byteslice");
 
     StringScanner = rb_define_class("StringScanner", rb_cObject);
+
+    Init_strscan_regs();
+
+    return;
+
     ScanError = rb_define_class_under(StringScanner, "Error", rb_eStandardError);
     if (!rb_const_defined(rb_cObject, id_scanerr)) {
 	rb_const_set(rb_cObject, id_scanerr, ScanError);
