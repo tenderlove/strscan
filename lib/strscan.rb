@@ -78,10 +78,10 @@ class StringScanner
   def get_byte
     @matched = false
     return if eos?
+    @matched = @curr + 1
+    adjust_registers_to_matched(@curr - start_offset, @matched - start_offset)
     @prev = @curr
     @curr += 1
-    @matched = true
-    adjust_registers_to_matched
     @str.byteslice(@prev, 1)
   end
 
@@ -94,10 +94,10 @@ class StringScanner
     @matched = false
     return if eos?
     str = @str[@curr]
+    @matched = @curr + str.bytesize
+    adjust_registers_to_matched(@curr - start_offset, @matched - start_offset)
     @prev = @curr
     @curr += str.bytesize
-    @matched = true
-    adjust_registers_to_matched
     str
   end
 
@@ -123,8 +123,7 @@ class StringScanner
 
   def matched
     return nil unless @matched
-    extract_range(adjust_register_position(@regs.get_beg(0)),
-                  adjust_register_position(@regs.get_end(0)))
+    extract_range(@matched - last_match_length, @matched)
   end
 
   def matched?
@@ -299,13 +298,13 @@ class StringScanner
 
   attr_reader :fixed_anchor
 
-  def adjust_registers_to_matched
+  def start_offset
+    fixed_anchor ? 0 : @curr
+  end
+
+  def adjust_registers_to_matched from, to
     @regs.clear
-    if fixed_anchor
-      @regs.region_set 0, @prev, @curr
-    else
-      @regs.region_set 0, 0, @curr - @prev
-    end
+    @regs.region_set 0, from, to
   end
 
   def extract_range start, finish
@@ -351,8 +350,6 @@ class StringScanner
 
     return if @curr > @str.bytesize
 
-    start_offset = fixed_anchor ? 0 : @curr
-
     if pattern.is_a?(Regexp)
       @matched = @regs.onig_match(pattern, @str, @curr, start_offset)
     else
@@ -372,7 +369,6 @@ class StringScanner
 
     return if @curr > @str.bytesize
 
-    start_offset = fixed_anchor ? 0 : @curr
     @matched = @regs.onig_search(pattern, @str, @curr, start_offset)
 
     return unless @matched
@@ -387,18 +383,10 @@ class StringScanner
   end
 
   def succ
-    if fixed_anchor
-      @curr = @matched
-    else
-      @curr += @matched
-    end
+    @curr = @matched
   end
 
   def last_match_length
-    if fixed_anchor
-      @matched - @prev
-    else
-      @matched
-    end
+    @matched - @prev
   end
 end

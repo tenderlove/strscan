@@ -160,7 +160,7 @@ regs_onig_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
         return Qfalse;
     }
     else {
-        return LONG2NUM(check_regs(self)->end[0]);
+        return LONG2NUM(check_regs(self)->end[0] + NUM2LONG(offs));
     }
 }
 
@@ -199,7 +199,7 @@ regs_onig_search(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
         return Qfalse;
     }
     else {
-        return LONG2NUM(check_regs(self)->end[0]);
+        return LONG2NUM(check_regs(self)->end[0] + NUM2LONG(offs));
     }
 }
 
@@ -238,7 +238,7 @@ regs_str_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
     }
     set_registers(check_regs(self), p, RSTRING_LEN(pattern));
 
-    return LONG2NUM(check_regs(self)->end[0]);
+    return LONG2NUM(check_regs(self)->end[0] + NUM2LONG(offs));
 }
 
 static int
