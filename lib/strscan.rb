@@ -350,17 +350,17 @@ class StringScanner
 
   def succ
     if @fixed_anchor
-      @curr = @regs.get_end(0)
+      @curr = @matched
     else
-      @curr += @regs.get_end(0)
+      @curr += @matched
     end
   end
 
   def last_match_length
     if @fixed_anchor
-      @regs.get_end(0) - @prev
+      @matched - @prev
     else
-      @regs.get_end(0)
+      @matched
     end
   end
 end

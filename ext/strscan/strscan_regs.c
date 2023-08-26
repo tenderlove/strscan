@@ -166,7 +166,7 @@ regs_onig_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_an
         return Qfalse;
     }
     else {
-        return Qtrue;
+        return LONG2NUM(check_regs(self)->end[0]);
     }
 }
 
@@ -205,7 +205,7 @@ regs_onig_search(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_a
         return Qfalse;
     }
     else {
-        return Qtrue;
+        return LONG2NUM(check_regs(self)->end[0]);
     }
 }
 
@@ -249,7 +249,7 @@ regs_str_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_anc
     }
     set_registers(check_regs(self), p, RSTRING_LEN(pattern));
 
-    return Qtrue;
+    return LONG2NUM(check_regs(self)->end[0]);
 }
 
 static int
