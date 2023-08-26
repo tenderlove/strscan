@@ -72,7 +72,7 @@ class StringScanner
   end
 
   def fixed_anchor?
-    @fixed_anchor
+    fixed_anchor
   end
 
   def get_byte
@@ -254,7 +254,7 @@ class StringScanner
   end
 
   def string= str
-    initialize(str, fixed_anchor: @fixed_anchor)
+    initialize(str, fixed_anchor: fixed_anchor)
     str
   end
 
@@ -297,9 +297,11 @@ class StringScanner
 
   private
 
+  attr_reader :fixed_anchor
+
   def adjust_registers_to_matched
     @regs.clear
-    if @fixed_anchor
+    if fixed_anchor
       @regs.region_set 0, @prev, @curr
     else
       @regs.region_set 0, 0, @curr - @prev
@@ -311,7 +313,7 @@ class StringScanner
   end
 
   def adjust_register_position position
-    if @fixed_anchor
+    if fixed_anchor
       position
     else
       @prev + position
@@ -350,9 +352,9 @@ class StringScanner
     return if @curr > @str.bytesize
 
     if pattern.is_a?(Regexp)
-      @matched = @regs.onig_match(pattern, @str, @curr, @fixed_anchor)
+      @matched = @regs.onig_match(pattern, @str, @curr, fixed_anchor)
     else
-      @matched = @regs.str_match(pattern, @str, @curr, @fixed_anchor)
+      @matched = @regs.str_match(pattern, @str, @curr, fixed_anchor)
     end
 
     return unless @matched
@@ -368,7 +370,7 @@ class StringScanner
 
     return if @curr > @str.bytesize
 
-    @matched = @regs.onig_search(pattern, @str, @curr, @fixed_anchor)
+    @matched = @regs.onig_search(pattern, @str, @curr, fixed_anchor)
 
     return unless @matched
 
@@ -382,7 +384,7 @@ class StringScanner
   end
 
   def succ
-    if @fixed_anchor
+    if fixed_anchor
       @curr = @matched
     else
       @curr += @matched
@@ -390,7 +392,7 @@ class StringScanner
   end
 
   def last_match_length
-    if @fixed_anchor
+    if fixed_anchor
       @matched - @prev
     else
       @matched
