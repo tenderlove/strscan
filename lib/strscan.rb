@@ -287,9 +287,10 @@ class StringScanner
     i += @regs.num_regs if i < 0
     return if i < 0
     return if i >= @regs.num_regs
-    return if @regs.get_beg(i) == -1
+    beg = @regs.get_beg(i)
+    return if beg == -1
 
-    extract_range(adjust_register_position(@regs.get_beg(i)),
+    extract_range(adjust_register_position(beg),
                   adjust_register_position(@regs.get_end(i)))
   end
 
