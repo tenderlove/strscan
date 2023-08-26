@@ -148,6 +148,8 @@ strscan_match(regex_t *reg, VALUE str, struct re_registers *regs, void *args_ptr
 static VALUE
 regs_onig_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_anchor_p)
 {
+    Check_Type(pattern, T_REGEXP);
+
     struct match_context p = {
         .str = str,
         .curr = NUM2LONG(curr),
@@ -185,6 +187,8 @@ strscan_search(regex_t *reg, VALUE str, struct re_registers *regs, void *args_pt
 static VALUE
 regs_onig_search(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_anchor_p)
 {
+    Check_Type(pattern, T_REGEXP);
+
     struct match_context p = {
         .str = str,
         .curr = NUM2LONG(curr),

@@ -313,16 +313,6 @@ class StringScanner
   end
 
   def strscan_do_scan pattern, succptr, getstr, headonly
-    if headonly
-      if !pattern.is_a?(Regexp) && !pattern.is_a?(String)
-        raise TypeError
-      end
-    else
-      if !pattern.is_a?(Regexp)
-        raise TypeError
-      end
-    end
-
     @matched = false
     @regex = pattern
 
@@ -330,14 +320,14 @@ class StringScanner
       return nil
     end
 
-    if pattern.is_a?(Regexp)
-      if headonly
+    if headonly
+      if pattern.is_a?(Regexp)
         @matched = @regs.onig_match(pattern, @str, @curr, @fixed_anchor)
       else
-        @matched = @regs.onig_search(pattern, @str, @curr, @fixed_anchor)
+        @matched = @regs.str_match(pattern, @str, @curr, @fixed_anchor)
       end
     else
-      @matched = @regs.str_match(pattern, @str, @curr, @fixed_anchor)
+      @matched = @regs.onig_search(pattern, @str, @curr, @fixed_anchor)
     end
 
     return unless @matched
