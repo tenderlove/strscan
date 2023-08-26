@@ -47,11 +47,15 @@ class StringScanner
   end
 
   def check re
-    strscan_do_scan(re, false, true, true)
+    strscan_do_scan_head(re) do |len|
+      @str.byteslice(@prev, len)
+    end
   end
 
   def check_until re
-    strscan_do_scan(re, false, true, false)
+    strscan_do_scan(re) do |len|
+      @str.byteslice(@prev, len)
+    end
   end
 
   def concat str
@@ -64,7 +68,7 @@ class StringScanner
   end
 
   def exist? re
-    strscan_do_scan(re, false, false, false)
+    strscan_do_scan(re) { |len| len }
   end
 
   def fixed_anchor?
@@ -78,8 +82,7 @@ class StringScanner
     @curr += 1
     @matched = true
     adjust_registers_to_matched
-    extract_range(adjust_register_position(@regs.get_beg(0)),
-                  adjust_register_position(@regs.get_end(0)))
+    @str.byteslice(@prev, 1)
   end
 
   def getbyte
@@ -115,7 +118,7 @@ class StringScanner
   end
 
   def match? re
-    strscan_do_scan re, false, false, true
+    strscan_do_scan_head(re) { |len| len }
   end
 
   def matched
@@ -190,19 +193,41 @@ class StringScanner
   end
 
   def scan re
-    strscan_do_scan(re, true, true, true)
+    strscan_do_scan_head(re) { |len|
+      succ
+      @str.byteslice(@prev, len)
+    }
   end
 
   def scan_full re, advance_pointer, return_string
-    strscan_do_scan(re, advance_pointer, return_string, true)
+    strscan_do_scan_head(re) do |len|
+      succ if advance_pointer
+
+      if return_string
+        @str.byteslice(@prev, len)
+      else
+        len
+      end
+    end
   end
 
   def scan_until re
-    strscan_do_scan(re, true, true, false)
+    strscan_do_scan(re) do |len|
+      succ
+      @str.byteslice(@prev, len)
+    end
   end
 
   def search_full re, advance_pointer, return_string
-    strscan_do_scan(re, advance_pointer, return_string, false)
+    strscan_do_scan(re) do |len|
+      succ if advance_pointer
+
+      if return_string
+        @str.byteslice(@prev, len)
+      else
+        len
+      end
+    end
   end
 
   def size
@@ -211,11 +236,17 @@ class StringScanner
   end
 
   def skip re
-    strscan_do_scan(re, true, false, true)
+    strscan_do_scan_head(re) do |len|
+      succ
+      len
+    end
   end
 
   def skip_until re
-    strscan_do_scan(re, true, false, false)
+    strscan_do_scan(re) do |len|
+      succ
+      len
+    end
   end
 
   def string
@@ -312,36 +343,38 @@ class StringScanner
     end
   end
 
-  def strscan_do_scan pattern, succptr, getstr, headonly
+  def strscan_do_scan_head pattern
     @matched = false
     @regex = pattern
 
-    if s_restlen < 0
-      return nil
-    end
+    return if @curr > @str.bytesize
 
-    if headonly
-      if pattern.is_a?(Regexp)
-        @matched = @regs.onig_match(pattern, @str, @curr, @fixed_anchor)
-      else
-        @matched = @regs.str_match(pattern, @str, @curr, @fixed_anchor)
-      end
+    if pattern.is_a?(Regexp)
+      @matched = @regs.onig_match(pattern, @str, @curr, @fixed_anchor)
     else
-      @matched = @regs.onig_search(pattern, @str, @curr, @fixed_anchor)
+      @matched = @regs.str_match(pattern, @str, @curr, @fixed_anchor)
     end
 
     return unless @matched
 
     @prev = @curr
-    succ if succptr
 
-    len = last_match_length
+    yield last_match_length
+  end
 
-    if getstr
-      @str.byteslice(@prev, len)
-    else
-      len
-    end
+  def strscan_do_scan pattern
+    @matched = false
+    @regex = pattern
+
+    return if @curr > @str.bytesize
+
+    @matched = @regs.onig_search(pattern, @str, @curr, @fixed_anchor)
+
+    return unless @matched
+
+    @prev = @curr
+
+    yield last_match_length
   end
 
   def s_restlen
