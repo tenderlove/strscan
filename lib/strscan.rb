@@ -15,14 +15,34 @@ class StringScanner
     self
   end
 
-  def initialize str, fa = nil, fixed_anchor: false
+  class FixedAnchor < StringScanner
+    def fixed_anchor?; true; end
+
+    def start_offset
+      0
+    end
+
+    def prev_offset
+      0
+    end
+  end
+
+  def self.new str, fa = nil, fixed_anchor: false
+    if fixed_anchor
+      # pass false to prevent recursion
+      FixedAnchor.new(str)
+    else
+      super(str)
+    end
+  end
+
+  def initialize str
     @str = str
     @regs = StringScanner::Regs.new
     @regex = nil
     @curr = 0
     @prev = 0
     @matched = false
-    @fixed_anchor = !!fixed_anchor
   end
 
   def beginning_of_line?
@@ -71,9 +91,7 @@ class StringScanner
     strscan_do_scan(re) { |len| len }
   end
 
-  def fixed_anchor?
-    @fixed_anchor
-  end
+  def fixed_anchor?; false; end
 
   def get_byte
     @matched = false
@@ -252,7 +270,7 @@ class StringScanner
   end
 
   def string= str
-    initialize(str, fixed_anchor: fixed_anchor?)
+    initialize(str)
     str
   end
 
@@ -296,13 +314,9 @@ class StringScanner
 
   private
 
-  def start_offset
-    @fixed_anchor ? 0 : @curr
-  end
-
-  def prev_offset
-    @fixed_anchor ? 0 : @prev
-  end
+  attr_reader :curr, :prev
+  alias :start_offset :curr
+  alias :prev_offset :prev
 
   def adjust_registers_to_matched from, to
     @regs.clear
