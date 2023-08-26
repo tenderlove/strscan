@@ -7,7 +7,7 @@ extern size_t onig_region_memsize(const struct re_registers *regs);
 struct match_context {
     VALUE str;
     long curr;
-    bool fixed_anchor_p;
+    long offs;
 };
 
 #define S_PBEG(s)  (RSTRING_PTR((s)->str))
@@ -123,13 +123,7 @@ regs_num_regs(VALUE self)
 static inline UChar *
 match_target(struct match_context *p)
 {
-    if (p->fixed_anchor_p) {
-        return (UChar *)S_PBEG(p);
-    }
-    else
-    {
-        return (UChar *)CURPTR(p);
-    }
+    return (UChar *)S_PBEG(p) + p->offs;
 }
 
 static OnigPosition
@@ -146,14 +140,14 @@ strscan_match(regex_t *reg, VALUE str, struct re_registers *regs, void *args_ptr
 }
 
 static VALUE
-regs_onig_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_anchor_p)
+regs_onig_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
 {
     Check_Type(pattern, T_REGEXP);
 
     struct match_context p = {
         .str = str,
         .curr = NUM2LONG(curr),
-        .fixed_anchor_p = (RTEST(fixed_anchor_p) ? 1 : 0)
+        .offs = NUM2LONG(offs)
     };
 
     OnigPosition ret = rb_reg_onig_match(pattern,
@@ -185,14 +179,14 @@ strscan_search(regex_t *reg, VALUE str, struct re_registers *regs, void *args_pt
 }
 
 static VALUE
-regs_onig_search(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_anchor_p)
+regs_onig_search(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
 {
     Check_Type(pattern, T_REGEXP);
 
     struct match_context p = {
         .str = str,
         .curr = NUM2LONG(curr),
-        .fixed_anchor_p = (RTEST(fixed_anchor_p) ? 1 : 0)
+        .offs = NUM2LONG(offs)
     };
 
     OnigPosition ret = rb_reg_onig_match(pattern,
@@ -215,18 +209,13 @@ set_registers(OnigRegion *regs, struct match_context *p, size_t length)
     const int at = 0;
     onig_region_clear(regs);
     if (onig_region_set(regs, at, 0, 0)) return;
-    if (p->fixed_anchor_p) {
-        regs->beg[at] = p->curr;
-        regs->end[at] = p->curr + length;
-    }
-    else
-    {
-        regs->end[at] = length;
-    }
+
+    regs->beg[at] = p->curr - p->offs;
+    regs->end[at] = (p->curr - p->offs) + length;
 }
 
 static VALUE
-regs_str_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_anchor_p)
+regs_str_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
 {
     StringValue(str);
     StringValue(pattern);
@@ -236,7 +225,7 @@ regs_str_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE fixed_anc
     struct match_context mc = {
         .str = str,
         .curr = NUM2LONG(curr),
-        .fixed_anchor_p = (RTEST(fixed_anchor_p) ? 1 : 0)
+        .offs = NUM2LONG(offs)
     };
     struct match_context * p = &mc;
 

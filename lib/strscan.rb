@@ -351,10 +351,12 @@ class StringScanner
 
     return if @curr > @str.bytesize
 
+    start_offset = fixed_anchor ? 0 : @curr
+
     if pattern.is_a?(Regexp)
-      @matched = @regs.onig_match(pattern, @str, @curr, fixed_anchor)
+      @matched = @regs.onig_match(pattern, @str, @curr, start_offset)
     else
-      @matched = @regs.str_match(pattern, @str, @curr, fixed_anchor)
+      @matched = @regs.str_match(pattern, @str, @curr, start_offset)
     end
 
     return unless @matched
@@ -370,7 +372,8 @@ class StringScanner
 
     return if @curr > @str.bytesize
 
-    @matched = @regs.onig_search(pattern, @str, @curr, fixed_anchor)
+    start_offset = fixed_anchor ? 0 : @curr
+    @matched = @regs.onig_search(pattern, @str, @curr, start_offset)
 
     return unless @matched
 
