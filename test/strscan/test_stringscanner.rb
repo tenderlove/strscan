@@ -10,12 +10,12 @@ require 'test/unit'
 module StringScannerTests
   def test_s_new
     s = create_string_scanner('test string')
-    assert_instance_of StringScanner, s
+    assert_kind_of StringScanner, s
     assert_equal false, s.eos?
 
     str = 'test string'.dup
     s = create_string_scanner(str, false)
-    assert_instance_of StringScanner, s
+    assert_kind_of StringScanner, s
     assert_equal false, s.eos?
     assert_same str, s.string
   end

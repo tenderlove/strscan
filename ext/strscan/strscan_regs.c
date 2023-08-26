@@ -139,9 +139,51 @@ strscan_match(regex_t *reg, VALUE str, struct re_registers *regs, void *args_ptr
                       ONIG_OPTION_NONE);
 }
 
+static inline void
+set_registers(OnigRegion *regs, struct match_context *p, size_t length)
+{
+    const int at = 0;
+    onig_region_clear(regs);
+    if (onig_region_set(regs, at, 0, 0)) return;
+
+    regs->beg[at] = p->curr - p->offs;
+    regs->end[at] = (p->curr - p->offs) + length;
+}
+
+static VALUE
+regs_str_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
+{
+    StringValue(str);
+    StringValue(pattern);
+
+    rb_enc_check(str, pattern);
+
+    struct match_context mc = {
+        .str = str,
+        .curr = NUM2LONG(curr),
+        .offs = NUM2LONG(offs)
+    };
+    struct match_context * p = &mc;
+
+    if (S_RESTLEN(p) < RSTRING_LEN(pattern)) {
+        return Qfalse;
+    }
+
+    if (memcmp(CURPTR(p), RSTRING_PTR(pattern), RSTRING_LEN(pattern)) != 0) {
+        return Qfalse;
+    }
+    set_registers(check_regs(self), p, RSTRING_LEN(pattern));
+
+    return LONG2NUM(check_regs(self)->end[0] + NUM2LONG(offs));
+}
+
 static VALUE
 regs_onig_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
 {
+    if (!RB_TYPE_P(pattern, T_REGEXP)) {
+        return regs_str_match(self, pattern, str, curr, offs);
+    }
+
     Check_Type(pattern, T_REGEXP);
 
     struct match_context p = {
@@ -201,44 +243,6 @@ regs_onig_search(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
     else {
         return LONG2NUM(check_regs(self)->end[0] + NUM2LONG(offs));
     }
-}
-
-static inline void
-set_registers(OnigRegion *regs, struct match_context *p, size_t length)
-{
-    const int at = 0;
-    onig_region_clear(regs);
-    if (onig_region_set(regs, at, 0, 0)) return;
-
-    regs->beg[at] = p->curr - p->offs;
-    regs->end[at] = (p->curr - p->offs) + length;
-}
-
-static VALUE
-regs_str_match(VALUE self, VALUE pattern, VALUE str, VALUE curr, VALUE offs)
-{
-    StringValue(str);
-    StringValue(pattern);
-
-    rb_enc_check(str, pattern);
-
-    struct match_context mc = {
-        .str = str,
-        .curr = NUM2LONG(curr),
-        .offs = NUM2LONG(offs)
-    };
-    struct match_context * p = &mc;
-
-    if (S_RESTLEN(p) < RSTRING_LEN(pattern)) {
-        return Qfalse;
-    }
-
-    if (memcmp(CURPTR(p), RSTRING_PTR(pattern), RSTRING_LEN(pattern)) != 0) {
-        return Qfalse;
-    }
-    set_registers(check_regs(self), p, RSTRING_LEN(pattern));
-
-    return LONG2NUM(check_regs(self)->end[0] + NUM2LONG(offs));
 }
 
 static int
