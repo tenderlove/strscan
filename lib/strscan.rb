@@ -161,7 +161,7 @@ class StringScanner
 
   def post_match
     return unless @matched
-    extract_range(adjust_register_position(@regs.get_end(0)), @str.bytesize)
+    extract_range(@matched, @str.bytesize)
   end
 
   def pre_match
