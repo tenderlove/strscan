@@ -72,7 +72,7 @@ class StringScanner
   end
 
   def fixed_anchor?
-    fixed_anchor
+    @fixed_anchor
   end
 
   def get_byte
@@ -166,7 +166,6 @@ class StringScanner
 
   def pre_match
     return unless @matched
-
     extract_range(0, adjust_register_position(@regs.get_beg(0)))
   end
 
@@ -253,7 +252,7 @@ class StringScanner
   end
 
   def string= str
-    initialize(str, fixed_anchor: fixed_anchor)
+    initialize(str, fixed_anchor: fixed_anchor?)
     str
   end
 
@@ -296,10 +295,12 @@ class StringScanner
 
   private
 
-  attr_reader :fixed_anchor
-
   def start_offset
-    fixed_anchor ? 0 : @curr
+    @fixed_anchor ? 0 : @curr
+  end
+
+  def prev_offset
+    @fixed_anchor ? 0 : @prev
   end
 
   def adjust_registers_to_matched from, to
@@ -312,11 +313,7 @@ class StringScanner
   end
 
   def adjust_register_position position
-    if fixed_anchor
-      position
-    else
-      @prev + position
-    end
+    position + prev_offset
   end
 
   def inspect1
