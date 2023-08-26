@@ -302,6 +302,10 @@ class StringScanner
       i = @regs.name_to_backref_number(@regex, i.to_s)
     end
 
+    at i
+  end
+
+  def at i
     i += @regs.num_regs if i < 0
     return if i < 0
     return if i >= @regs.num_regs
